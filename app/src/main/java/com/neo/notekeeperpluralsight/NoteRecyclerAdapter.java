@@ -1,6 +1,5 @@
 package com.neo.notekeeperpluralsight;
 
-
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -11,11 +10,9 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.neo.notekeeperpluralsight.NoteKeeperDatabaseContract.CourseInfoEntry;
-import com.neo.notekeeperpluralsight.NoteKeeperDatabaseContract.NoteInfoEntry;
 
 /**
- * Created by Neo.
+ * Created by Jim.
  */
 
 public class NoteRecyclerAdapter extends RecyclerView.Adapter<NoteRecyclerAdapter.ViewHolder> {
@@ -29,19 +26,26 @@ public class NoteRecyclerAdapter extends RecyclerView.Adapter<NoteRecyclerAdapte
 
     public NoteRecyclerAdapter(Context context, Cursor cursor) {
         mContext = context;
-        this.mCursor = cursor;
+        mCursor = cursor;
         mLayoutInflater = LayoutInflater.from(mContext);
-        populateColumnPosition();
+        populateColumnPositions();
     }
 
-    private void populateColumnPosition() {
-        if(mCursor == null){
+    private void populateColumnPositions() {
+        if(mCursor == null)
             return;
-        } // gets the column indexes from the mCursor
-        mCoursePos = mCursor.getColumnIndex(CourseInfoEntry.COLUMN_COURSE_TITLE);
-        mNoteTitlePos = mCursor.getColumnIndex(NoteInfoEntry.COLUMN_NOTE_TITLE);
-        // needed by noteActivity to get right info from db
-        mIdPos = mCursor.getColumnIndex(NoteInfoEntry._ID);
+        // Get column indexes from mCursor
+        mCoursePos = mCursor.getColumnIndex(NoteKeeperDatabaseContract.CourseInfoEntry.COLUMN_COURSE_TITLE);
+        mNoteTitlePos = mCursor.getColumnIndex(NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_NOTE_TITLE);
+        mIdPos = mCursor.getColumnIndex(NoteKeeperDatabaseContract.NoteInfoEntry._ID);
+    }
+
+    public void changeCursor(Cursor cursor) {
+        if(mCursor != null)
+            mCursor.close();
+        mCursor = cursor;
+        populateColumnPositions();
+        notifyDataSetChanged();
     }
 
     @Override
@@ -50,27 +54,9 @@ public class NoteRecyclerAdapter extends RecyclerView.Adapter<NoteRecyclerAdapte
         return new ViewHolder(itemView);
     }
 
-
-    /**
-     * handles swapping and closing of cursors
-     * @param cursor
-     */
-    public void changeCursor(Cursor cursor){
-        if(mCursor != null){
-            mCursor.close();
-        } else{
-            mCursor = cursor;
-            populateColumnPosition();                                                       // done since new cursor may not have same cols ordering.
-            notifyDataSetChanged();                                                         // notif recyclerView of dataSet changed
-        }
-    }
-
-
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        mCursor.moveToPosition(position);                               // moves cursor to pos being requested
-
-        // val for course, title and id of row of current pos
+        mCursor.moveToPosition(position);
         String course = mCursor.getString(mCoursePos);
         String noteTitle = mCursor.getString(mNoteTitlePos);
         int id = mCursor.getInt(mIdPos);

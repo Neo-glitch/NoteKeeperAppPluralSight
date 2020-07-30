@@ -1,6 +1,5 @@
 package com.neo.notekeeperpluralsight;
 
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +13,7 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.List;
 
 /**
- * Created by Neo.
+ * Created by Jim.
  */
 
 public class CourseRecyclerAdapter extends RecyclerView.Adapter<CourseRecyclerAdapter.ViewHolder> {
