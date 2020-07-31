@@ -44,7 +44,7 @@ public final class NoteKeeperDatabaseContract {
                         "(" + COLUMN_NOTE_TITLE + ")";
 
 
-        public static final String getQName(String columnName) {
+        public static final String getQName(String columnName) {    // creates qualified name for the for class for joining process
             return TABLE_NAME + "." + columnName;
         }
 

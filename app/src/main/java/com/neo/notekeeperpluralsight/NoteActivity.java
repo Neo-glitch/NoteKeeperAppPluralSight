@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
@@ -28,10 +27,10 @@ public class NoteActivity extends AppCompatActivity
     public static final int LOADER_NOTES = 0;
     public static final int LOADER_COURSES = 1;
     private final String TAG = getClass().getSimpleName();
-    public static final String NOTE_ID = "com.jwhh.jim.notekeeper.NOTE_ID";
-    public static final String ORIGINAL_NOTE_COURSE_ID = "com.jwhh.jim.notekeeper.ORIGINAL_NOTE_COURSE_ID";
-    public static final String ORIGINAL_NOTE_TITLE = "com.jwhh.jim.notekeeper.ORIGINAL_NOTE_TITLE";
-    public static final String ORIGINAL_NOTE_TEXT = "com.jwhh.jim.notekeeper.ORIGINAL_NOTE_TEXT";
+    public static final String NOTE_ID = "com.neo.notekeeperpluralsight.NOTE_ID";
+    public static final String ORIGINAL_NOTE_COURSE_ID = "com.neo.notekeeperpluralsight.ORIGINAL_NOTE_COURSE_ID";
+    public static final String ORIGINAL_NOTE_TITLE = "com.neo.notekeeperpluralsight.ORIGINAL_NOTE_TITLE";
+    public static final String ORIGINAL_NOTE_TEXT = "com.neo.notekeeperpluralsight.ORIGINAL_NOTE_TEXT";
     public static final int ID_NOT_SET = -1;
     private NoteInfo mNote = new NoteInfo(DataManager.getInstance().getCourses().get(0), "", "");
     private boolean mIsNewNote;
@@ -64,6 +63,7 @@ public class NoteActivity extends AppCompatActivity
         setContentView(R.layout.activity_note);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        Log.i(TAG, "onCreate: starts");
 
         mDbOpenHelper = new NoteKeeperOpenHelper(this);
 
@@ -85,57 +85,30 @@ public class NoteActivity extends AppCompatActivity
             restoreOriginalNoteValues(savedInstanceState);
         }
 
-        mTextNoteTitle = (EditText) findViewById(R.id.text_note_title);
-        mTextNoteText = (EditText) findViewById(R.id.text_note_text);
+        mTextNoteTitle = findViewById(R.id.text_note_title);
+        mTextNoteText = findViewById(R.id.text_note_text);
 
         if(!mIsNewNote)
             getLoaderManager().initLoader(LOADER_NOTES, null, this);
 
     }
 
-    private void loadCourseData() {
-        SQLiteDatabase db = mDbOpenHelper.getReadableDatabase();
-        String[] courseColumns = {
-                CourseInfoEntry.COLUMN_COURSE_TITLE,
-                CourseInfoEntry.COLUMN_COURSE_ID,
-                CourseInfoEntry._ID
-        };
-        Cursor cursor = db.query(CourseInfoEntry.TABLE_NAME, courseColumns,
-                null, null, null, null, CourseInfoEntry.COLUMN_COURSE_TITLE);
-        mAdapterCourses.changeCursor(cursor);
-    }
-
-    private void loadNoteData() {
-        SQLiteDatabase db = mDbOpenHelper.getReadableDatabase();
-
-        String selection = NoteInfoEntry._ID + " = ?";
-        String[] selectionArgs = {Integer.toString(mNoteId)};
-
-        String[] noteColumns = {
-                NoteInfoEntry.COLUMN_COURSE_ID,
-                NoteInfoEntry.COLUMN_NOTE_TITLE,
-                NoteInfoEntry.COLUMN_NOTE_TEXT
-        };
-        mNoteCursor = db.query(NoteInfoEntry.TABLE_NAME, noteColumns,
-                selection, selectionArgs, null, null, null);
-        mCourseIdPos = mNoteCursor.getColumnIndex(NoteInfoEntry.COLUMN_COURSE_ID);
-        mNoteTitlePos = mNoteCursor.getColumnIndex(NoteInfoEntry.COLUMN_NOTE_TITLE);
-        mNoteTextPos = mNoteCursor.getColumnIndex(NoteInfoEntry.COLUMN_NOTE_TEXT);
-        mNoteCursor.moveToNext();
-        displayNote();
-    }
-
 
     private void restoreOriginalNoteValues(Bundle savedInstanceState) {
         mOriginalNoteCourseId = savedInstanceState.getString(ORIGINAL_NOTE_COURSE_ID);
+        Log.i(TAG, "restoreOriginalNoteValues: courseId: " + mOriginalNoteCourseId);
         mOriginalNoteTitle = savedInstanceState.getString(ORIGINAL_NOTE_TITLE);
         mOriginalNoteText = savedInstanceState.getString(ORIGINAL_NOTE_TEXT);
     }
 
+    /**
+     * saves original note retrieved from mainActivity before any editing
+     */
     private void saveOriginalNoteValues() {
         if(mIsNewNote)
             return;
         mOriginalNoteCourseId = mNote.getCourse().getCourseId();
+        Log.i(TAG, "saveOriginalNoteValues: courseId " + mOriginalNoteCourseId);
         mOriginalNoteTitle = mNote.getTitle();
         mOriginalNoteText = mNote.getText();
     }
@@ -171,6 +144,10 @@ public class NoteActivity extends AppCompatActivity
         task.execute();
     }
 
+
+    /**
+     * stores the previous note value in the mNote obj using the saved course id
+     */
     private void storePreviousNoteValues() {
         CourseInfo course = DataManager.getInstance().getCourse(mOriginalNoteCourseId);
         mNote.setCourse(course);
@@ -186,7 +163,7 @@ public class NoteActivity extends AppCompatActivity
         outState.putString(ORIGINAL_NOTE_TEXT, mOriginalNoteText);
     }
 
-    private void saveNote() {
+    private void saveNote() {       // calls save to db method for saving entered values into the apps db
         String courseId = selectedCourseId();
         String noteTitle = mTextNoteTitle.getText().toString();
         String noteText = mTextNoteText.getText().toString();
@@ -199,6 +176,7 @@ public class NoteActivity extends AppCompatActivity
         cursor.moveToPosition(selectedPosition);
         int courseIdPos = cursor.getColumnIndex(CourseInfoEntry.COLUMN_COURSE_ID);
         String courseId = cursor.getString(courseIdPos);
+        Log.i(TAG, "selectedCourseId: courseId " + courseId);
         return courseId;
     }
 
@@ -223,6 +201,10 @@ public class NoteActivity extends AppCompatActivity
 
     }
 
+
+    /**
+     * populates NoteActivity UI widgets with the needed data
+     */
     private void displayNote() {
         String courseId = mNoteCursor.getString(mCourseIdPos);
         String noteTitle = mNoteCursor.getString(mNoteTitlePos);
@@ -343,6 +325,8 @@ public class NoteActivity extends AppCompatActivity
         startActivity(intent);
     }
 
+
+    /////////////////////  loaderManager.CallBack interface methods //////////////////////
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader loader = null;
@@ -410,7 +394,7 @@ public class NoteActivity extends AppCompatActivity
         mNoteTitlePos = mNoteCursor.getColumnIndex(NoteInfoEntry.COLUMN_NOTE_TITLE);
         mNoteTextPos = mNoteCursor.getColumnIndex(NoteInfoEntry.COLUMN_NOTE_TEXT);
 
-        mNoteCursor.moveToFirst();
+        mNoteCursor.moveToFirst();        // to move cursor to first item in the returned rows
 
         mNotesQueryFinished = true;
         displayNoteWhenQueriesFinished();

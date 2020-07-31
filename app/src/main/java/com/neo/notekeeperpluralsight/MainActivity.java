@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity
 
         mNoteRecyclerAdapter = new NoteRecyclerAdapter(this, null);
 
-        List<CourseInfo> courses = DataManager.getInstance().getCourses();
+        List<CourseInfo> courses = DataManager.getInstance().getCourses();                // gets list our courses from db using the dataManager class
         mCourseRecyclerAdapter = new CourseRecyclerAdapter(this, courses);
 
         displayNotes();
@@ -212,6 +212,9 @@ public class MainActivity extends AppCompatActivity
         Snackbar.make(view, message_id, Snackbar.LENGTH_LONG).show();
     }
 
+
+
+    ///////////// LoaderManager.CallBack interface method /////////////
     @SuppressLint("StaticFieldLeak")
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
