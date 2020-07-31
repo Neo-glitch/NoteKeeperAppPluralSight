@@ -1,5 +1,6 @@
 package com.neo.notekeeperpluralsight;
 
+import android.annotation.SuppressLint;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -32,6 +33,8 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
 
+import static com.neo.notekeeperpluralsight.NoteKeeperDatabaseContract.*;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         LoaderManager.LoaderCallbacks<Cursor> {
@@ -47,12 +50,12 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mDbOpenHelper = new NoteKeeperOpenHelper(this);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -64,13 +67,13 @@ public class MainActivity extends AppCompatActivity
         PreferenceManager.setDefaultValues(this,  R.xml.pref_notification, false);
         PreferenceManager.setDefaultValues(this, R.xml.pref_data_sync, false);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer =  findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         initializeDisplayContent();
@@ -91,18 +94,7 @@ public class MainActivity extends AppCompatActivity
         updateNavHeader();
     }
 
-    private void loadNotes() {
-        SQLiteDatabase db = mDbOpenHelper.getReadableDatabase();
-        final String[] noteColumns = {
-                NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_NOTE_TITLE,
-                NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_COURSE_ID,
-                NoteKeeperDatabaseContract.NoteInfoEntry._ID};
 
-        String noteOrderBy = NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_COURSE_ID + "," + NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_NOTE_TITLE;
-        final Cursor noteCursor = db.query(NoteKeeperDatabaseContract.NoteInfoEntry.TABLE_NAME, noteColumns,
-                null, null, null, null, noteOrderBy);
-        mNoteRecyclerAdapter.changeCursor(noteCursor);
-    }
 
     private void updateNavHeader() {
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -120,7 +112,7 @@ public class MainActivity extends AppCompatActivity
 
     private void initializeDisplayContent() {
         DataManager.loadFromDatabase(mDbOpenHelper);
-        mRecyclerItems = (RecyclerView) findViewById(R.id.list_items);
+        mRecyclerItems = findViewById(R.id.list_items);
         mNotesLayoutManager = new LinearLayoutManager(this);
         mCoursesLayoutManager = new GridLayoutManager(this,
                 getResources().getInteger(R.integer.course_grid_span));
@@ -220,6 +212,7 @@ public class MainActivity extends AppCompatActivity
         Snackbar.make(view, message_id, Snackbar.LENGTH_LONG).show();
     }
 
+    @SuppressLint("StaticFieldLeak")
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader loader = null;
@@ -229,19 +222,19 @@ public class MainActivity extends AppCompatActivity
                 public Cursor loadInBackground() {
                     SQLiteDatabase db = mDbOpenHelper.getReadableDatabase();
                     final String[] noteColumns = {
-                            NoteKeeperDatabaseContract.NoteInfoEntry.getQName(NoteKeeperDatabaseContract.NoteInfoEntry._ID),
-                            NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_NOTE_TITLE,
-                            NoteKeeperDatabaseContract.CourseInfoEntry.COLUMN_COURSE_TITLE
+                            NoteInfoEntry.getQName(NoteInfoEntry._ID),
+                            NoteInfoEntry.COLUMN_NOTE_TITLE,
+                            CourseInfoEntry.COLUMN_COURSE_TITLE
                     };
 
-                    final String noteOrderBy = NoteKeeperDatabaseContract.CourseInfoEntry.COLUMN_COURSE_TITLE +
-                            "," + NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_NOTE_TITLE;
+                    final String noteOrderBy = CourseInfoEntry.COLUMN_COURSE_TITLE +
+                            "," + NoteInfoEntry.COLUMN_NOTE_TITLE;
 
                     // note_info JOIN course_info ON note_info.course_id = course_info.course_id
-                    String tablesWithJoin = NoteKeeperDatabaseContract.NoteInfoEntry.TABLE_NAME + " JOIN " +
-                            NoteKeeperDatabaseContract.CourseInfoEntry.TABLE_NAME + " ON " +
-                            NoteKeeperDatabaseContract.NoteInfoEntry.getQName(NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_COURSE_ID) + " = " +
-                            NoteKeeperDatabaseContract.CourseInfoEntry.getQName( NoteKeeperDatabaseContract.CourseInfoEntry.COLUMN_COURSE_ID);
+                    String tablesWithJoin = NoteInfoEntry.TABLE_NAME + " JOIN " +
+                            CourseInfoEntry.TABLE_NAME + " ON " +
+                            NoteInfoEntry.getQName(NoteInfoEntry.COLUMN_COURSE_ID) + " = " +
+                            CourseInfoEntry.getQName( CourseInfoEntry.COLUMN_COURSE_ID);
 
                     return db.query(tablesWithJoin, noteColumns,
                             null, null, null, null, noteOrderBy);

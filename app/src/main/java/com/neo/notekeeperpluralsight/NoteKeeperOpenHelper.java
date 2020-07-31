@@ -9,6 +9,10 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Created by Jim.
  */
 
+
+/**
+ * database helper class for creating and upgrading database
+ */
 public class NoteKeeperOpenHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "NoteKeeper.db";
     public static final int DATABASE_VERSION = 2;
@@ -24,8 +28,8 @@ public class NoteKeeperOpenHelper extends SQLiteOpenHelper {
         db.execSQL(NoteKeeperDatabaseContract.NoteInfoEntry.SQL_CREATE_INDEX1);
 
         DatabaseDataWorker worker = new DatabaseDataWorker(db);
-        worker.insertCourses();
-        worker.insertSampleNotes();
+        worker.insertCourses();     // inserts courses into the db
+        worker.insertSampleNotes();     // inserts notes into the db
     }
 
     @Override

@@ -25,6 +25,11 @@ public class DataManager {
         return ourInstance;
     }
 
+
+    /**
+     * handles loading of notes and courses from the database
+     * @param dbHelper
+     */
     public static void loadFromDatabase(NoteKeeperOpenHelper dbHelper) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         final String[] courseColumns = {
@@ -45,6 +50,11 @@ public class DataManager {
         loadNotesFromDatabase(noteCursor);
     }
 
+
+    /**
+     * loads notes from db using the note cursor
+     * @param cursor
+     */
     private static void loadNotesFromDatabase(Cursor cursor) {
         int noteTitlePos = cursor.getColumnIndex(NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_NOTE_TITLE);
         int noteTextPos = cursor.getColumnIndex(NoteKeeperDatabaseContract.NoteInfoEntry.COLUMN_NOTE_TEXT);
@@ -66,12 +76,17 @@ public class DataManager {
         cursor.close();
     }
 
+
+    /**
+     * loads courses from the db using the courses cursor
+     * @param cursor
+     */
     private static void loadCoursesFromDatabase(Cursor cursor) {
         int courseIdPos = cursor.getColumnIndex(NoteKeeperDatabaseContract.CourseInfoEntry.COLUMN_COURSE_ID);
         int courseTitlePos = cursor.getColumnIndex(NoteKeeperDatabaseContract.CourseInfoEntry.COLUMN_COURSE_TITLE);
 
         DataManager dm = getInstance();
-        dm.mCourses.clear();
+        dm.mCourses.clear();                // clears list of courses before adding new list
         while(cursor.moveToNext()) {
             String courseId = cursor.getString(courseIdPos);
             String courseTitle = cursor.getString(courseTitlePos);
@@ -83,11 +98,11 @@ public class DataManager {
     }
 
     public String getCurrentUserName() {
-        return "Jim Wilson";
+        return "Neo";
     }
 
     public String getCurrentUserEmail() {
-        return "jimw@jwhh.com";
+        return "princeneo95@gmal.com";
     }
 
     public List<NoteInfo> getNotes() {

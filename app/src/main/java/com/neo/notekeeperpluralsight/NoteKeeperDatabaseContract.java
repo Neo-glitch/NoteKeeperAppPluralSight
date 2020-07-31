@@ -14,13 +14,13 @@ public final class NoteKeeperDatabaseContract {
         public static final String COLUMN_COURSE_ID = "course_id";
         public static final String COLUMN_COURSE_TITLE = "course_title";
 
-        // CREATE INDEX course_info_index1 ON course_info (course_title)
+        // CREATE INDEX course_info_index1 ON course_info (course_title) for faster querying of the db
         public static final String INDEX1 = TABLE_NAME + "_index1";
         public static final String SQL_CREATE_INDEX1 =
                 "CREATE INDEX " + INDEX1 + " ON " + TABLE_NAME +
                         "(" + COLUMN_COURSE_TITLE + ")";
 
-        public static final String getQName(String columnName) {
+        public static final String getQName(String columnName) {   // course_info.col name passed
             return TABLE_NAME + "." + columnName;
         }
 

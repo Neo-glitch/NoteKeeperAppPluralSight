@@ -7,6 +7,10 @@ import android.database.sqlite.SQLiteDatabase;
  * Created by Jim.
  */
 
+
+/**
+ * class just inserts courses and notes into the db so as to have data before doing my own insert and used only once when db is cretaed
+ */
 public class DatabaseDataWorker {
     private SQLiteDatabase mDb;
 
