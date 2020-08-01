@@ -9,9 +9,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
+        <provider
+            android:name=".NoteKeeperProvider"
+            android:authorities="com.neo.notekeeperpluralsight.provider"
+            android:enabled="true"
+            android:exported="true"></provider>
+
         <activity
             android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings"></activity>
+            android:label="@string/title_activity_settings" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,8 +25,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".NoteActivity"/>
-        <activity android:name=".NoteListActivity"/>
+        <activity android:name=".NoteActivity" />
+        <activity android:name=".NoteListActivity" />
     </application>
 
 </manifest>
