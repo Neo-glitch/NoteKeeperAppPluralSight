@@ -48,7 +48,7 @@ public class NoteActivity extends AppCompatActivity
     private EditText mTextNoteTitle;
     private EditText mTextNoteText;
     private int mNoteId;
-    private boolean mIsCancelling;
+    private boolean mIsCancelling = false;
     private String mOriginalNoteCourseId;
     private String mOriginalNoteTitle;
     private String mOriginalNoteText;
@@ -203,8 +203,9 @@ public class NoteActivity extends AppCompatActivity
         AsyncTask task = new AsyncTask() {
             @Override
             protected Object doInBackground(Object[] objects) {
+                Log.d(TAG, "saveNoteToDatabase: " + mNoteUri);
                 int numRows = getContentResolver().update(mNoteUri, values, selection, selectionArgs);
-                Log.d(TAG, "doInBackground: number of rows affected: " + numRows);
+                Log.d(TAG, "saveNoteToDatabase: number of rows affected: " + numRows);
                 return null;
             }
         };
@@ -275,6 +276,7 @@ public class NoteActivity extends AppCompatActivity
                 Log.d(TAG, "doInBackground: " + Thread.currentThread().getId());
                 ContentValues insertValues = contentValues[0];
                 Uri rowUri = getContentResolver().insert(Notes.CONTENT_URI, insertValues);
+                Log.d(TAG, "doInBackground: row Uri: "+  rowUri);
 
                 simulateLongRunningWork();                  // puts thread to sleep for 2 secs, # simulating longRunning tasks
                 publishProgress(2);                 // calls onProgressUpdate with val of 2

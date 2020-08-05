@@ -14,6 +14,7 @@ import android.os.Build;
 import androidx.core.app.NotificationCompat;
 
 /**
+ * Note: NOT WORKING FOR DEVICES FROM ANDROID 7 UPWARD
  * Helper class for showing and canceling note reminder
  * notifications.
  * <p>
@@ -52,6 +53,9 @@ public class NoteReminderNotification {
         // def intent to be passed to the pending intent
         Intent noteActivityIntent = new Intent(context, NoteActivity.class);
         noteActivityIntent.putExtra(NoteActivity.NOTE_ID, noteId);
+
+        Intent BackupServiceIntent = new Intent(context, NoteBackupService.class);
+        BackupServiceIntent.putExtra(NoteBackupService.EXTRA_COURSE_ID, NoteBackup.ALL_COURSES);
 
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
 
@@ -111,6 +115,18 @@ public class NoteReminderNotification {
                                 new Intent(context, MainActivity.class),
                                 PendingIntent.FLAG_UPDATE_CURRENT))
 
+                // additional action for starting the backup Service
+                .addAction(
+                        0,
+                        "Backup Notes",
+                        PendingIntent.getActivity(
+                                context,
+                                0,
+                                BackupServiceIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT))
+
+
+
                 // Automatically dismiss the notification when it is touched.
                 .setAutoCancel(true);
 
@@ -130,7 +146,7 @@ public class NoteReminderNotification {
         }
     }
 
-    
+
     @TargetApi(Build.VERSION_CODES.ECLAIR)
     public static void cancel(final Context context) {
         final NotificationManager nm = (NotificationManager) context

@@ -200,8 +200,22 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
+        else if(id == R.id.action_backup_notes){
+            backupNotes();
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * simulates creating backup of all notes in mainActivity
+     */
+    private void backupNotes() {
+        Intent intent = new Intent(this, NoteBackupService.class);
+        intent.putExtra(NoteBackupService.EXTRA_COURSE_ID, NoteBackup.ALL_COURSES);
+        startService(intent);               // launch the service
+
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -215,7 +229,6 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_courses) {
             displayCourses();
         } else if (id == R.id.nav_share) {
-//            handleSelection(R.string.nav_share_message);
             handleShare();
         } else if (id == R.id.nav_send) {
             handleSelection(R.string.nav_send_message);

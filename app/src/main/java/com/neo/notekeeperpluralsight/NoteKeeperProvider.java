@@ -212,13 +212,13 @@ public class NoteKeeperProvider extends ContentProvider {
                 rowId = ContentUris.parseId(uri);
                 rowSelection = CourseInfoEntry._ID + " = ?";
                 rowSelectionArgs = new String[]{Long.toString(rowId)};
-                nRows = db.update(CourseInfoEntry.TABLE_NAME, values, selection, selectionArgs);
+                nRows = db.update(CourseInfoEntry.TABLE_NAME, values, rowSelection, rowSelectionArgs);
                 break;
             case NOTES_ROW:
                 rowId = ContentUris.parseId(uri);
                 rowSelection = NoteInfoEntry._ID + " = ?";
                 rowSelectionArgs = new String[]{String.valueOf(rowId)};
-                nRows = db.update(NoteInfoEntry.TABLE_NAME, values, selection, selectionArgs);
+                nRows = db.update(NoteInfoEntry.TABLE_NAME, values, rowSelection, rowSelectionArgs);
                 break;
             case NOTES_EXPANDED_ROW:
                 // throw exception saying that it is a read only table
