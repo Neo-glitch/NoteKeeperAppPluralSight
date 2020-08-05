@@ -28,7 +28,7 @@ import static com.neo.notekeeperpluralsight.NoteKeeperDatabaseContract.*;
 
 
 public class NoteActivity extends AppCompatActivity
-        implements LoaderManager.LoaderCallbacks<Cursor>{
+        implements LoaderManager.LoaderCallbacks<Cursor> {
     public static final int LOADER_NOTES = 0;
     public static final int LOADER_COURSES = 1;
     private final String TAG = getClass().getSimpleName();
@@ -69,7 +69,7 @@ public class NoteActivity extends AppCompatActivity
         setContentView(R.layout.activity_note);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        Log.i(TAG, "onCreate: starts");
+        Log.d(TAG, "onCreate: starts");
 
         mDbOpenHelper = new NoteKeeperOpenHelper(this);
 
@@ -77,15 +77,15 @@ public class NoteActivity extends AppCompatActivity
 
 
         mAdapterCourses = new SimpleCursorAdapter(this, android.R.layout.simple_spinner_item, null,
-                new String[] {CourseInfoEntry.COLUMN_COURSE_TITLE},
-                new int[] {android.R.id.text1}, 0);
+                new String[]{CourseInfoEntry.COLUMN_COURSE_TITLE},
+                new int[]{android.R.id.text1}, 0);
         mAdapterCourses.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinnerCourses.setAdapter(mAdapterCourses);
 
         getLoaderManager().initLoader(LOADER_COURSES, null, this);
 
         readDisplayStateValues();
-        if(savedInstanceState == null) {
+        if (savedInstanceState == null) {
             saveOriginalNoteValues();
         } else {
             restoreOriginalNoteValues(savedInstanceState);
@@ -94,7 +94,7 @@ public class NoteActivity extends AppCompatActivity
         mTextNoteTitle = findViewById(R.id.text_note_title);
         mTextNoteText = findViewById(R.id.text_note_text);
 
-        if(!mIsNewNote)
+        if (!mIsNewNote)
             getLoaderManager().initLoader(LOADER_NOTES, null, this);
 
     }
@@ -102,7 +102,7 @@ public class NoteActivity extends AppCompatActivity
 
     private void restoreOriginalNoteValues(Bundle savedInstanceState) {
         mOriginalNoteCourseId = savedInstanceState.getString(ORIGINAL_NOTE_COURSE_ID);
-        Log.i(TAG, "restoreOriginalNoteValues: courseId: " + mOriginalNoteCourseId);
+        Log.d(TAG, "restoreOriginalNoteValues: courseId: " + mOriginalNoteCourseId);
         mOriginalNoteTitle = savedInstanceState.getString(ORIGINAL_NOTE_TITLE);
         mOriginalNoteText = savedInstanceState.getString(ORIGINAL_NOTE_TEXT);
     }
@@ -111,10 +111,10 @@ public class NoteActivity extends AppCompatActivity
      * saves original note retrieved from mainActivity before any editing
      */
     private void saveOriginalNoteValues() {
-        if(mIsNewNote)
+        if (mIsNewNote)
             return;
         mOriginalNoteCourseId = mNote.getCourse().getCourseId();
-        Log.i(TAG, "saveOriginalNoteValues: courseId " + mOriginalNoteCourseId);
+        Log.d(TAG, "saveOriginalNoteValues: courseId " + mOriginalNoteCourseId);
         mOriginalNoteTitle = mNote.getTitle();
         mOriginalNoteText = mNote.getText();
     }
@@ -122,9 +122,9 @@ public class NoteActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         super.onPause();
-        if(mIsCancelling) {
-            Log.i(TAG, "Cancelling note at position: " + mNoteId);
-            if(mIsNewNote) {
+        if (mIsCancelling) {
+            Log.d(TAG, "Cancelling note at position: " + mNoteId);
+            if (mIsNewNote) {
                 deleteNoteFromDatabase();
             } else {
                 storePreviousNoteValues();
@@ -142,8 +142,8 @@ public class NoteActivity extends AppCompatActivity
         AsyncTask task = new AsyncTask() {
             @Override
             protected Object doInBackground(Object[] params) {
-                SQLiteDatabase db = mDbOpenHelper.getWritableDatabase();
-                db.delete(NoteInfoEntry.TABLE_NAME, selection, selectionArgs);
+                int numRows = getContentResolver().delete(mNoteUri, selection, selectionArgs);
+                Log.d(TAG, "doInBackground: number of Rows affected: " + numRows);
                 return null;
             }
         };
@@ -182,7 +182,7 @@ public class NoteActivity extends AppCompatActivity
         cursor.moveToPosition(selectedPosition);
         int courseIdPos = cursor.getColumnIndex(CourseInfoEntry.COLUMN_COURSE_ID);
         String courseId = cursor.getString(courseIdPos);
-        Log.i(TAG, "selectedCourseId: courseId " + courseId);
+        Log.d(TAG, "selectedCourseId: courseId " + courseId);
         return courseId;
     }
 
@@ -198,8 +198,8 @@ public class NoteActivity extends AppCompatActivity
         AsyncTask task = new AsyncTask() {
             @Override
             protected Object doInBackground(Object[] objects) {
-                SQLiteDatabase db = mDbOpenHelper.getWritableDatabase();
-                db.update(NoteInfoEntry.TABLE_NAME, values, selection, selectionArgs);
+                int numRows = getContentResolver().update(mNoteUri, values, selection, selectionArgs);
+                Log.d(TAG, "doInBackground: number of rows affected: " + numRows);
                 return null;
             }
         };
@@ -229,9 +229,9 @@ public class NoteActivity extends AppCompatActivity
         int courseRowIndex = 0;
 
         boolean more = cursor.moveToFirst();
-        while(more) {
+        while (more) {
             String cursorCourseId = cursor.getString(courseIdPos);
-            if(courseId.equals(cursorCourseId))
+            if (courseId.equals(cursorCourseId))
                 break;
 
             courseRowIndex++;
@@ -244,11 +244,11 @@ public class NoteActivity extends AppCompatActivity
         Intent intent = getIntent();
         mNoteId = intent.getIntExtra(NOTE_ID, ID_NOT_SET);
         mIsNewNote = mNoteId == ID_NOT_SET;
-        if(mIsNewNote) {
+        if (mIsNewNote) {
             createNewNote();
         }
 
-        Log.i(TAG, "mNoteId: " + mNoteId);
+        Log.d(TAG, "mNoteId: " + mNoteId);
 //        mNote = DataManager.getInstance().getNotes().get(mNoteId);
 
     }
@@ -262,15 +262,6 @@ public class NoteActivity extends AppCompatActivity
 
         mNoteUri = getContentResolver().insert(Notes.CONTENT_URI, values);
         Log.d(TAG, "createNewNote: new note Uri: " + mNoteUri);
-
-//        AsyncTask task = new AsyncTask() {
-//            @Override
-//            protected Object doInBackground(Object[] objects) {
-//                mNoteUri = getContentResolver().insert(Notes.CONTENT_URI, values);
-//                return null;
-//            }
-//        };
-//        task.execute();
     }
 
     @Override
@@ -294,9 +285,9 @@ public class NoteActivity extends AppCompatActivity
         } else if (id == R.id.action_cancel) {
             mIsCancelling = true;
             finish();
-        } else if(id == R.id.action_next) {
+        } else if (id == R.id.action_next) {
             moveNext();
-        } else if(id == R.id.action_set_reminder){
+        } else if (id == R.id.action_set_reminder) {
             showReminderNotification();             // shows a notification for a reminder
         }
 
@@ -334,7 +325,7 @@ public class NoteActivity extends AppCompatActivity
         CourseInfo course = (CourseInfo) mSpinnerCourses.getSelectedItem();
         String subject = mTextNoteTitle.getText().toString();
         String text = "Checkout what I learned in the Pluralsight course \"" +
-                course.getTitle() +"\"\n" + mTextNoteText.getText().toString();
+                course.getTitle() + "\"\n" + mTextNoteText.getText().toString();
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("message/rfc2822");
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
@@ -347,7 +338,7 @@ public class NoteActivity extends AppCompatActivity
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader loader = null;
-        if(id == LOADER_NOTES)
+        if (id == LOADER_NOTES)
             loader = createLoaderNotes();
         else if (id == LOADER_COURSES)
             loader = createLoaderCourses();
@@ -382,9 +373,9 @@ public class NoteActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if(loader.getId() == LOADER_NOTES)
+        if (loader.getId() == LOADER_NOTES)
             loadFinishedNotes(data);
-        else if(loader.getId() == LOADER_COURSES) {
+        else if (loader.getId() == LOADER_COURSES) {
             mAdapterCourses.changeCursor(data);
             mCoursesQueryFinished = true;
             displayNoteWhenQueriesFinished();
@@ -405,16 +396,16 @@ public class NoteActivity extends AppCompatActivity
     }
 
     private void displayNoteWhenQueriesFinished() {
-        if(mNotesQueryFinished && mCoursesQueryFinished)
+        if (mNotesQueryFinished && mCoursesQueryFinished)
             displayNote();
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        if(loader.getId() == LOADER_NOTES) {
-            if(mNoteCursor != null)
+        if (loader.getId() == LOADER_NOTES) {
+            if (mNoteCursor != null)
                 mNoteCursor.close();
-        } else if(loader.getId() == LOADER_COURSES) {
+        } else if (loader.getId() == LOADER_COURSES) {
             mAdapterCourses.changeCursor(null);
         }
     }

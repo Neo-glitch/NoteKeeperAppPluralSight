@@ -27,18 +27,19 @@ public class NoteKeeperProvider extends ContentProvider {
     private static UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);  // NO_MATCH means matching done without an authority or path returns value NO_MATCH
 
     public static final int COURSES = 0;
-
     public static final int NOTES = 1;
-
     public static final int NOTES_EXPANDED = 2;
-
     public static final int NOTES_ROW = 3;
+    private static final int COURSES_ROW = 4;
+    private static final int NOTES_EXPANDED_ROW = 5;
 
     static {
         sUriMatcher.addURI(NoteKeeperProviderContract.AUTHORITY, Courses.PATH, COURSES);
         sUriMatcher.addURI(NoteKeeperProviderContract.AUTHORITY, Notes.PATH, NOTES);
         sUriMatcher.addURI(NoteKeeperProviderContract.AUTHORITY, Notes.PATH_EXPANDED, NOTES_EXPANDED);
         sUriMatcher.addURI(NoteKeeperProviderContract.AUTHORITY, Notes.PATH + "/#", NOTES_ROW);          // matching for any row in notes table
+        sUriMatcher.addURI(NoteKeeperProviderContract.AUTHORITY, Courses.PATH + "/#", COURSES_ROW);
+        sUriMatcher.addURI(NoteKeeperProviderContract.AUTHORITY, Notes.PATH_EXPANDED + "/#", NOTES_EXPANDED_ROW);
     }
 
     public NoteKeeperProvider() {
@@ -46,35 +47,67 @@ public class NoteKeeperProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-       // todo : to be implemented later
-        return 0;
+        long rowId = -1;           // var to store rowId of the deleted row
+        String rowSelection = null;
+        String[] rowSelectionArgs = null;
+        int nRows = -1;             // stores the number of rows deleted
+        SQLiteDatabase db = mDbOpenHelper.getReadableDatabase();
+
+        int uriMatch = sUriMatcher.match(uri);
+        switch(uriMatch) {
+            case COURSES:
+                nRows = db.delete(CourseInfoEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case NOTES:
+                nRows = db.delete(NoteInfoEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case NOTES_EXPANDED:
+                // throw exception saying that this is a read-only table
+            case COURSES_ROW:
+                rowId = ContentUris.parseId(uri);
+                rowSelection = CourseInfoEntry._ID + " = ?";
+                rowSelectionArgs = new String[]{Long.toString(rowId)};
+                nRows = db.delete(CourseInfoEntry.TABLE_NAME, rowSelection, rowSelectionArgs);
+                break;
+            case NOTES_ROW:
+                rowId = ContentUris.parseId(uri);
+                rowSelection = NoteInfoEntry._ID + " = ?";
+                rowSelectionArgs = new String[]{Long.toString(rowId)};
+                nRows = db.delete(NoteInfoEntry.TABLE_NAME, rowSelection, rowSelectionArgs);
+                break;
+            case NOTES_EXPANDED_ROW:
+                // throw exception saying that this is a read-only table
+                break;
+        }
+
+        return nRows;
     }
 
     @Override
     public String getType(Uri uri) {
-       String mimeType = null;
-       int uriMatch = sUriMatcher.match(uri);
-       switch (uriMatch){
-           case COURSES:
-               // vnd.android.cursor.dir/vnd.com.neo.notekeeperpluralsight.provider.courses
-               mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
-                       MIME_VENDOR_TYPE + Courses.PATH;
-               break;
-           case NOTES:
-               mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
-                       MIME_VENDOR_TYPE + Notes.PATH;
-               break;
-           case NOTES_EXPANDED:
-               mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
-                       MIME_VENDOR_TYPE + Notes.PATH_EXPANDED;
-               break;
-           case NOTES_ROW:
-               // later portion is same as note case since same table is queried but here it returns only a single item
-               mimeType = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" +
-                       MIME_VENDOR_TYPE + Notes.PATH;
-               break;
-       }
-       return mimeType;
+        String mimeType = null;
+        int uriMatch = sUriMatcher.match(uri);
+        switch (uriMatch) {
+            case COURSES:
+                // vnd.android.cursor.dir/vnd.com.neo.notekeeperpluralsight.provider.courses
+                mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
+                        MIME_VENDOR_TYPE + Courses.PATH;
+                break;
+            case NOTES:
+                mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
+                        MIME_VENDOR_TYPE + Notes.PATH;
+                break;
+            case NOTES_EXPANDED:
+                mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
+                        MIME_VENDOR_TYPE + Notes.PATH_EXPANDED;
+                break;
+            case NOTES_ROW:
+                // later portion is same as note case since same table is queried but here it returns only a single item
+                mimeType = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" +
+                        MIME_VENDOR_TYPE + Notes.PATH;
+                break;
+        }
+        return mimeType;
     }
 
     @Override
@@ -158,7 +191,39 @@ public class NoteKeeperProvider extends ContentProvider {
     @Override
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
-       // todo: to be implemented later
-        return 0;
+        long rowId = -1;                     // var to store id of row to update
+        String rowSelection = null;
+        String[] rowSelectionArgs = null;
+        int nRows = -1;                     // number of rows affected
+
+        SQLiteDatabase db = mDbOpenHelper.getWritableDatabase();
+        int uriMatch = sUriMatcher.match(uri);
+        switch (uriMatch) {
+            case NOTES:
+                nRows = db.update(NoteInfoEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case COURSES:
+                nRows = db.update(CourseInfoEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case NOTES_EXPANDED:
+                // throw exception saying that this is a read-only joined table
+                break;
+            case COURSES_ROW:
+                rowId = ContentUris.parseId(uri);
+                rowSelection = CourseInfoEntry._ID + " = ?";
+                rowSelectionArgs = new String[]{Long.toString(rowId)};
+                nRows = db.update(CourseInfoEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case NOTES_ROW:
+                rowId = ContentUris.parseId(uri);
+                rowSelection = NoteInfoEntry._ID + " = ?";
+                rowSelectionArgs = new String[]{String.valueOf(rowId)};
+                nRows = db.update(NoteInfoEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case NOTES_EXPANDED_ROW:
+                // throw exception saying that it is a read only table
+                break;
+        }
+        return nRows;
     }
 }
