@@ -1,7 +1,7 @@
 package com.neo.notekeeperpluralsight;
 
-import android.annotation.SuppressLint;
 import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
@@ -10,8 +10,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-
 import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,20 +24,13 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.TextView;
-
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
-import com.neo.notekeeperpluralsight.NoteKeeperProviderContract.Courses;
+import com.neo.notekeeperpluralsight.NoteKeeperDatabaseContract.NoteInfoEntry;
 import com.neo.notekeeperpluralsight.NoteKeeperProviderContract.Notes;
 
 import java.util.List;
-
-import static com.neo.notekeeperpluralsight.NoteKeeperDatabaseContract.*;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -52,7 +47,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar =  findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mDbOpenHelper = new NoteKeeperOpenHelper(this);
@@ -69,13 +64,13 @@ public class MainActivity extends AppCompatActivity
         PreferenceManager.setDefaultValues(this,  R.xml.pref_notification, false);
         PreferenceManager.setDefaultValues(this, R.xml.pref_data_sync, false);
 
-        DrawerLayout drawer =  findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        NavigationView navigationView =  findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         initializeDisplayContent();
@@ -97,12 +92,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     private void updateNavHeader() {
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView =  findViewById(R.id.nav_view);
         View headerView = navigationView.getHeaderView(0);
-        TextView textUserName = (TextView)headerView.findViewById(R.id.text_user_name);
-        TextView textEmailAddress = (TextView)headerView.findViewById(R.id.text_email_address);
+        TextView textUserName = headerView.findViewById(R.id.text_user_name);
+        TextView textEmailAddress = headerView.findViewById(R.id.text_email_address);
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         String userName = pref.getString("user_display_name", "");
@@ -122,7 +116,7 @@ public class MainActivity extends AppCompatActivity
 
         mNoteRecyclerAdapter = new NoteRecyclerAdapter(this, null);
 
-        List<CourseInfo> courses = DataManager.getInstance().getCourses();                // gets list our courses from db using the dataManager class
+        List<CourseInfo> courses = DataManager.getInstance().getCourses();
         mCourseRecyclerAdapter = new CourseRecyclerAdapter(this, courses);
 
         displayNotes();
@@ -136,7 +130,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void selectNavigationMenuItem(int id) {
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView =  findViewById(R.id.nav_view);
         Menu menu = navigationView.getMenu();
         menu.findItem(id).setChecked(true);
     }
@@ -149,7 +143,7 @@ public class MainActivity extends AppCompatActivity
     }
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer =  findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -216,21 +210,22 @@ public class MainActivity extends AppCompatActivity
 
 
 
-    ///////////// LoaderManager.CallBack interface method /////////////
-    @SuppressLint("StaticFieldLeak")
+    //////////////// LoaderManager.Callback interface methods ////////////////////////
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader loader = null;
         if(id == LOADER_NOTES) {
             final String[] noteColumns = {
-                    Notes._ID,     // specifies the the table _ID col needed back
+                    Notes._ID,
                     Notes.COLUMN_NOTE_TITLE,
-                    Courses.COLUMN_COURSE_TITLE
+                    Notes.COLUMN_COURSE_TITLE
             };
-
             final String noteOrderBy = Notes.COLUMN_COURSE_TITLE +
                     "," + Notes.COLUMN_NOTE_TITLE;
-            loader = new CursorLoader(this, Notes.CONTENT_EXPANDED_URI, noteColumns, null, null, noteOrderBy);
+
+            loader = new CursorLoader(this, Notes.CONTENT_EXPANDED_URI, noteColumns,
+                    null, null, noteOrderBy);
+
         }
         return loader;
     }

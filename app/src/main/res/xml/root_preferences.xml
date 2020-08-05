@@ -17,11 +17,11 @@
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory app:title="@string/messages_header">
+    <PreferenceCategory app:title="mesaage header">
 
         <EditTextPreference
             app:key="user_display_name"
-            app:title="@string/reply_title"
+            app:title="reply title"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
@@ -37,7 +37,7 @@
             app:entries="@array/pref_entries_favourite_social"
             app:entryValues="@array/pref_values_favourite_social"
             app:key="user_favourite_social"
-            app:title="@string/pref_title_favourite_social"
+            app:title="favourite social"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>

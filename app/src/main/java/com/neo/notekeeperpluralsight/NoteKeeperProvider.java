@@ -1,6 +1,7 @@
 package com.neo.notekeeperpluralsight;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -18,6 +19,7 @@ import com.neo.notekeeperpluralsight.NoteKeeperProviderContract.Notes;
 
 public class NoteKeeperProvider extends ContentProvider {
     private static final String TAG = "NoteKeeperProvider";
+    public static final String MIME_VENDOR_TYPE = "vnd." + NoteKeeperProviderContract.AUTHORITY + ".";
 
     //vars
     private SQLiteOpenHelper mDbOpenHelper;             // for connecting to the apps database
@@ -44,15 +46,35 @@ public class NoteKeeperProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        // Implement this to handle requests to delete one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+       // todo : to be implemented later
+        return 0;
     }
 
     @Override
     public String getType(Uri uri) {
-        // TODO: Implement this to handle requests for the MIME type of the data
-        // at the given URI.
-        throw new UnsupportedOperationException("Not yet implemented");
+       String mimeType = null;
+       int uriMatch = sUriMatcher.match(uri);
+       switch (uriMatch){
+           case COURSES:
+               // vnd.android.cursor.dir/vnd.com.neo.notekeeperpluralsight.provider.courses
+               mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
+                       MIME_VENDOR_TYPE + Courses.PATH;
+               break;
+           case NOTES:
+               mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
+                       MIME_VENDOR_TYPE + Notes.PATH;
+               break;
+           case NOTES_EXPANDED:
+               mimeType = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" +
+                       MIME_VENDOR_TYPE + Notes.PATH_EXPANDED;
+               break;
+           case NOTES_ROW:
+               // later portion is same as note case since same table is queried but here it returns only a single item
+               mimeType = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" +
+                       MIME_VENDOR_TYPE + Notes.PATH;
+               break;
+       }
+       return mimeType;
     }
 
     @Override
@@ -136,7 +158,7 @@ public class NoteKeeperProvider extends ContentProvider {
     @Override
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
-        // TODO: Implement this to handle requests to update one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+       // todo: to be implemented later
+        return 0;
     }
 }
