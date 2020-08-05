@@ -14,13 +14,18 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.neo.notekeeperpluralsight.NoteKeeperProviderContract.Courses;
 import com.neo.notekeeperpluralsight.NoteKeeperProviderContract.Notes;
 
@@ -254,14 +259,67 @@ public class NoteActivity extends AppCompatActivity
     }
 
     private void createNewNote() {
-        final ContentValues values = new ContentValues();
+        AsyncTask<ContentValues, Integer, Uri> task = new AsyncTask<ContentValues, Integer, Uri>() {
+            // widgets
+            private ProgressBar mProgressBar;
+
+            @Override
+            protected void onPreExecute() {  // since on ui thread can get ref to ui widgets
+                mProgressBar = findViewById(R.id.progress_bar);
+                mProgressBar.setVisibility(View.VISIBLE);
+                mProgressBar.setProgress(1);            // init the progressBar with progress of 1
+            }
+
+            @Override
+            protected Uri doInBackground(ContentValues... contentValues) {
+                Log.d(TAG, "doInBackground: " + Thread.currentThread().getId());
+                ContentValues insertValues = contentValues[0];
+                Uri rowUri = getContentResolver().insert(Notes.CONTENT_URI, insertValues);
+
+                simulateLongRunningWork();                  // puts thread to sleep for 2 secs, # simulating longRunning tasks
+                publishProgress(2);                 // calls onProgressUpdate with val of 2
+                simulateLongRunningWork();
+                publishProgress(3);
+
+                return rowUri;        // returned to onPostExecute
+            }
+
+            @Override
+            protected void onProgressUpdate(Integer... values) {
+                int progressValue = values[0];
+                mProgressBar.setProgress(progressValue);
+            }
+
+            @Override
+            protected void onPostExecute(Uri uri) {
+                Log.d(TAG, "onPostExecute: " + Thread.currentThread().getId());
+                mNoteUri = uri;
+                displaySnackBar(mNoteUri.toString());      // shows a snackBar
+                mProgressBar.setVisibility(View.GONE);
+            }
+        };
+
+        ContentValues values = new ContentValues();
         // placeholder values before user fills in details to save in new note
         values.put(Notes.COLUMN_COURSE_ID, "");
         values.put(Notes.COLUMN_NOTE_TITLE, "");
         values.put(Notes.COLUMN_NOTE_TEXT, "");
 
-        mNoteUri = getContentResolver().insert(Notes.CONTENT_URI, values);
-        Log.d(TAG, "createNewNote: new note Uri: " + mNoteUri);
+        Log.d(TAG, "call to execute: " + Thread.currentThread().getId());
+        task.execute(values);
+    }
+
+    private void simulateLongRunningWork() {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void displaySnackBar(String noteUri) {
+        View view = findViewById(R.id.spinner_courses);     // just to get a view inorder to displaySnackBar
+        Snackbar.make(view, noteUri, Snackbar.LENGTH_LONG).show();
     }
 
     @Override

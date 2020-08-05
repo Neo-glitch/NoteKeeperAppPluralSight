@@ -9,7 +9,11 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +54,8 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar =  findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        enableStrictMode();              // enables strictMode to prevent undesired operations
+
         mDbOpenHelper = new NoteKeeperOpenHelper(this);
 
         FloatingActionButton fab = findViewById(R.id.fab);
@@ -76,6 +82,19 @@ public class MainActivity extends AppCompatActivity
         initializeDisplayContent();
     }
 
+    /**
+     * creates StrictMode instance and set it
+     */
+    private void enableStrictMode() {
+        if(BuildConfig.DEBUG){   // true if app in debug build
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .build();
+            StrictMode.setThreadPolicy(policy);
+        }
+    }
+
     @Override
     protected void onDestroy() {
         mDbOpenHelper.close();
@@ -85,10 +104,21 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-
         getLoaderManager().restartLoader(LOADER_NOTES, null, this);
-
         updateNavHeader();
+
+        openDrawer();
+    }
+
+    private void openDrawer() {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(new Runnable() {     // handler.postDelayed is used to delay the drawer being open so user will see animation
+            @Override
+            public void run() {
+                DrawerLayout drawer = findViewById(R.id.drawer_layout);
+                drawer.openDrawer(GravityCompat.START);
+            }
+        }, 1000);
     }
 
 
