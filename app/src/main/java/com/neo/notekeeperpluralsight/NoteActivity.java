@@ -227,6 +227,8 @@ public class NoteActivity extends AppCompatActivity
         mSpinnerCourses.setSelection(courseIndex);
         mTextNoteTitle.setText(noteTitle);
         mTextNoteText.setText(noteText);
+
+        CourseEventBroadcastHelper.sendEventBroadcast(this, courseId, "Editing note");   // sends broadcast to subscribers
     }
 
     private int getIndexOfCourseId(String courseId) {
