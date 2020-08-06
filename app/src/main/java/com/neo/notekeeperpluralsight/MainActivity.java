@@ -1,19 +1,20 @@
 package com.neo.notekeeperpluralsight;
 
 import android.app.LoaderManager;
-import android.content.ContentUris;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PersistableBundle;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,7 +32,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
-import com.neo.notekeeperpluralsight.NoteKeeperDatabaseContract.NoteInfoEntry;
 import com.neo.notekeeperpluralsight.NoteKeeperProviderContract.Notes;
 
 import java.util.List;
@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         LoaderManager.LoaderCallbacks<Cursor> {
     public static final int LOADER_NOTES = 0;
+    public static final int NOTE_UPLOADER_JOB_ID = 1;
     private NoteRecyclerAdapter mNoteRecyclerAdapter;
     private RecyclerView mRecyclerItems;
     private LinearLayoutManager mNotesLayoutManager;
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar =  findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         enableStrictMode();              // enables strictMode to prevent undesired operations
@@ -67,7 +68,7 @@ public class MainActivity extends AppCompatActivity
         });
 
         PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
-        PreferenceManager.setDefaultValues(this,  R.xml.pref_notification, false);
+        PreferenceManager.setDefaultValues(this, R.xml.pref_notification, false);
         PreferenceManager.setDefaultValues(this, R.xml.pref_data_sync, false);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -76,7 +77,7 @@ public class MainActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView =  findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         initializeDisplayContent();
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity
      * creates StrictMode instance and set it
      */
     private void enableStrictMode() {
-        if(BuildConfig.DEBUG){   // true if app in debug build
+        if (BuildConfig.DEBUG) {   // true if app in debug build
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                     .detectAll()
                     .penaltyLog()
@@ -123,7 +124,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void updateNavHeader() {
-        NavigationView navigationView =  findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         View headerView = navigationView.getHeaderView(0);
         TextView textUserName = headerView.findViewById(R.id.text_user_name);
         TextView textEmailAddress = headerView.findViewById(R.id.text_email_address);
@@ -160,7 +161,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void selectNavigationMenuItem(int id) {
-        NavigationView navigationView =  findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         Menu menu = navigationView.getMenu();
         menu.findItem(id).setChecked(true);
     }
@@ -171,9 +172,10 @@ public class MainActivity extends AppCompatActivity
 
         selectNavigationMenuItem(R.id.nav_courses);
     }
+
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer =  findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -199,13 +201,30 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
-        }
-        else if(id == R.id.action_backup_notes){
+        } else if (id == R.id.action_backup_notes) {
             backupNotes();
             return true;
+        } else if(id == R.id.action_upload_notes){
+            scheduleNoteUpload();           // schedules our job
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void scheduleNoteUpload() {     // schedules the job
+        PersistableBundle extras = new PersistableBundle();   // similar to normal bundle in a way
+        extras.putString(NoteUploaderJobService.EXTRA_DATA_URI, Notes.CONTENT_URI.toString());
+
+
+        ComponentName componentName = new ComponentName(this, NoteUploaderJobService.class);      // provides descriptions of the component handling job
+        JobInfo jobInfo = new JobInfo.Builder(NOTE_UPLOADER_JOB_ID, componentName)
+                // sets the criteria for ntwrk connect to be available
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setExtras(extras)
+                .build();
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);      // gets ref to the systems jobScheduler service
+        jobScheduler.schedule(jobInfo);
     }
 
     /**
@@ -242,7 +261,7 @@ public class MainActivity extends AppCompatActivity
     private void handleShare() {
         View view = findViewById(R.id.list_items);
         Snackbar.make(view, "Share to - " +
-                PreferenceManager.getDefaultSharedPreferences(this).getString("user_favorite_social", ""),
+                        PreferenceManager.getDefaultSharedPreferences(this).getString("user_favorite_social", ""),
                 Snackbar.LENGTH_LONG).show();
     }
 
@@ -252,12 +271,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     //////////////// LoaderManager.Callback interface methods ////////////////////////
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader loader = null;
-        if(id == LOADER_NOTES) {
+        if (id == LOADER_NOTES) {
             final String[] noteColumns = {
                     Notes._ID,
                     Notes.COLUMN_NOTE_TITLE,
@@ -275,14 +293,14 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader loader, Cursor data) {
-        if(loader.getId() == LOADER_NOTES)  {
+        if (loader.getId() == LOADER_NOTES) {
             mNoteRecyclerAdapter.changeCursor(data);
         }
     }
 
     @Override
     public void onLoaderReset(Loader loader) {
-        if(loader.getId() == LOADER_NOTES)  {
+        if (loader.getId() == LOADER_NOTES) {
             mNoteRecyclerAdapter.changeCursor(null);
         }
 
