@@ -44,6 +44,7 @@ public class NoteActivity extends AppCompatActivity
     public static final String ORIGINAL_NOTE_COURSE_ID = "com.neo.notekeeperpluralsight.ORIGINAL_NOTE_COURSE_ID";
     public static final String ORIGINAL_NOTE_TITLE = "com.neo.notekeeperpluralsight.ORIGINAL_NOTE_TITLE";
     public static final String ORIGINAL_NOTE_TEXT = "com.neo.notekeeperpluralsight.ORIGINAL_NOTE_TEXT";
+    public static final String NOTE_URI = "com.neo.notekeeperpluralsight.NOTE_URI";
     public static final int ID_NOT_SET = -1;
     private NoteInfo mNote = new NoteInfo(DataManager.getInstance().getCourses().get(0), "", "");
     private boolean mIsNewNote;
@@ -63,7 +64,8 @@ public class NoteActivity extends AppCompatActivity
     private SimpleCursorAdapter mAdapterCourses;
     private boolean mCoursesQueryFinished;
     private boolean mNotesQueryFinished;
-    Uri mNoteUri;                   // uri of newly inserted row
+    Uri mNoteUri;                 // uri of newly inserted row and part of activity state since assigned value when the activity is created
+    private ModuleStatusView mViewModelStatus;
 
     @Override
     protected void onDestroy() {
@@ -105,6 +107,27 @@ public class NoteActivity extends AppCompatActivity
         if (!mIsNewNote)
             getLoaderManager().initLoader(LOADER_NOTES, null, this);
 
+        // custom view init
+        mViewModelStatus = findViewById(R.id.module_status);
+
+        loadModuleStatusValues();
+
+    }
+
+    /**
+     * loads the status values for the boolean[] of the custom View and set the value of the elements
+     * # just dummy stuff
+     */
+    private void loadModuleStatusValues() {
+        // in real life, we look up the selected course status from the contentProvider
+        int totalNumberOfModules = 11;
+        int completedNumberOfModules = 7;
+
+        boolean[] moduleStatus = new boolean[totalNumberOfModules];
+        for(int moduleIndex = 0; moduleIndex < completedNumberOfModules; moduleIndex++){
+            moduleStatus[moduleIndex] = true;
+        }
+        mViewModelStatus.setModuleStatus(moduleStatus);
     }
 
 
@@ -113,6 +136,10 @@ public class NoteActivity extends AppCompatActivity
         Log.d(TAG, "restoreOriginalNoteValues: courseId: " + mOriginalNoteCourseId);
         mOriginalNoteTitle = savedInstanceState.getString(ORIGINAL_NOTE_TITLE);
         mOriginalNoteText = savedInstanceState.getString(ORIGINAL_NOTE_TEXT);
+
+        // to prevent error in config change from landscape back to portrait
+        String stringNoteUri = savedInstanceState.getString(NOTE_URI);
+        mNoteUri = Uri.parse(stringNoteUri);
     }
 
     /**
@@ -142,6 +169,7 @@ public class NoteActivity extends AppCompatActivity
         }
         Log.d(TAG, "onPause");
     }
+
 
     private void deleteNoteFromDatabase() {
         final String selection = NoteInfoEntry._ID + " = ?";
@@ -175,6 +203,9 @@ public class NoteActivity extends AppCompatActivity
         outState.putString(ORIGINAL_NOTE_COURSE_ID, mOriginalNoteCourseId);
         outState.putString(ORIGINAL_NOTE_TITLE, mOriginalNoteTitle);
         outState.putString(ORIGINAL_NOTE_TEXT, mOriginalNoteText);
+
+        // saved to avoid error in config change # # could have just restart the loader again in onResume and avoid saving state
+        outState.putString(NOTE_URI, mNoteUri.toString());
     }
 
     private void saveNote() {       // calls save to db method for saving entered values into the apps db
@@ -281,7 +312,7 @@ public class NoteActivity extends AppCompatActivity
                 Log.d(TAG, "doInBackground: " + Thread.currentThread().getId());
                 ContentValues insertValues = contentValues[0];
                 Uri rowUri = getContentResolver().insert(Notes.CONTENT_URI, insertValues);
-                Log.d(TAG, "doInBackground: row Uri: "+  rowUri);
+                Log.d(TAG, "doInBackground: row insert Uri: "+  rowUri);
 
                 simulateLongRunningWork();                  // puts thread to sleep for 2 secs, # simulating longRunning tasks
                 publishProgress(2);                 // calls onProgressUpdate with val of 2
