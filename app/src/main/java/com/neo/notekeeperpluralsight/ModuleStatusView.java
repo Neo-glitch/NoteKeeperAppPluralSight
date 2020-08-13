@@ -274,7 +274,6 @@ public class ModuleStatusView extends View {
         invalidate();                                                 // calls onDraw() again since data is changed
         mAccessibilityHelper.invalidateVirtualView(moduleIndex);      // notifies accessibility sys that state of VirtualView with id has changed
         mAccessibilityHelper.sendEventForVirtualView(moduleIndex, AccessibilityEvent.TYPE_VIEW_CLICKED);
-
     }
 
     /**
