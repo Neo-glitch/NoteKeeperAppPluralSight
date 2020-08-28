@@ -2,6 +2,7 @@ package com.neo.notekeeperpluralsight;
 
 import android.annotation.TargetApi;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -26,6 +27,9 @@ public class NoteReminderNotification {
      * The unique identifier for this type of notification.
      */
     private static final String NOTIFICATION_TAG = "NoteReminder";
+    private static NotificationCompat.Builder sBuilder;
+
+    public static final int NOTIFICATION_ID = 1;
 
     /**
      * Shows the notification, or updates a previously shown notification of
@@ -57,7 +61,7 @@ public class NoteReminderNotification {
         Intent BackupServiceIntent = new Intent(context, NoteBackupService.class);
         BackupServiceIntent.putExtra(NoteBackupService.EXTRA_COURSE_ID, NoteBackup.ALL_COURSES);
 
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+        sBuilder = new NotificationCompat.Builder(context)
 
                 // Set appropriate defaults for the notification light, sound,
                 // and vibration.
@@ -130,30 +134,44 @@ public class NoteReminderNotification {
                 // Automatically dismiss the notification when it is touched.
                 .setAutoCancel(true);
 
-        notify(context, builder.build());
+        notify(context, sBuilder.build());
     }
 
 
     // displays the notification
-    @TargetApi(Build.VERSION_CODES.ECLAIR)
+//    @TargetApi(Build.VERSION_CODES.ECLAIR)
     private static void notify(final Context context, final Notification notification) {
         final NotificationManager nm = (NotificationManager) context
                 .getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
             nm.notify(NOTIFICATION_TAG, 0, notification);          // shows the notification
-        } else {
+        } else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){      // ADDED BY ME
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel notificationChannel = new NotificationChannel(String.valueOf(NOTIFICATION_ID), "NOTIFICATION_CHANNEL_NAME", importance);
+            sBuilder.setChannelId(String.valueOf(NOTIFICATION_ID));
+            nm.createNotificationChannel(notificationChannel);
+            nm.notify(NOTIFICATION_ID, notification);
+        }
+        else {
             nm.notify(NOTIFICATION_TAG.hashCode(), notification);       // shows the notification
         }
     }
 
 
-    @TargetApi(Build.VERSION_CODES.ECLAIR)
+//    @TargetApi(Build.VERSION_CODES.ECLAIR)
     public static void cancel(final Context context) {
         final NotificationManager nm = (NotificationManager) context
                 .getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
             nm.cancel(NOTIFICATION_TAG, 0);
-        } else {
+        } else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){       // ADDED BY ME
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel notificationChannel = new NotificationChannel(String.valueOf(NOTIFICATION_ID), "NOTIFICATION_CHANNEL_NAME", importance);
+            sBuilder.setChannelId(String.valueOf(NOTIFICATION_ID));
+            nm.createNotificationChannel(notificationChannel);
+            nm.cancel(NOTIFICATION_ID);
+        }
+        else {
             nm.cancel(NOTIFICATION_TAG.hashCode());
         }
     }
