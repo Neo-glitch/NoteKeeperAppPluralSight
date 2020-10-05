@@ -119,7 +119,7 @@ public class NoteReminderNotification {
                 .addAction(
                         0,
                         "Backup Notes",
-                        PendingIntent.getActivity(
+                        PendingIntent.getService(
                                 context,
                                 0,
                                 BackupServiceIntent,

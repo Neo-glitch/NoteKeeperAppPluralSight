@@ -63,6 +63,7 @@ public class NoteRecyclerAdapter extends RecyclerView.Adapter<NoteRecyclerAdapte
 
         holder.mTextCourse.setText(course);
         holder.mTextTitle.setText(noteTitle);
+        // id of note in db i.e _id value
         holder.mId = id;
     }
     @Override

@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        // sets the def values for all pref resources or header values
         PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
         PreferenceManager.setDefaultValues(this, R.xml.pref_notification, false);
         PreferenceManager.setDefaultValues(this, R.xml.pref_data_sync, false);

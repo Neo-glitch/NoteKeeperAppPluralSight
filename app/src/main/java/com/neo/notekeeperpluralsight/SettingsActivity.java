@@ -156,7 +156,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     }
 
     /**
-     * {@inheritDoc}
+     * loads the headers for the settings activity
      */
     @Override
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)

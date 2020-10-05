@@ -2,18 +2,19 @@
 
     <!-- These settings headers are only used on tablets. -->
 
+    <!--  header has ref to inner pref fragment class in SettingsActivity  -->
     <header
-        android:fragment="com.jwhh.jim.notekeeper.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="com.neo.notekeeperpluralsight.SettingsActivity$GeneralPreferenceFragment"
         android:icon="@drawable/ic_info_black_24dp"
         android:title="@string/pref_header_general"/>
 
     <header
-        android:fragment="com.jwhh.jim.notekeeper.SettingsActivity$NotificationPreferenceFragment"
+        android:fragment="com.neo.notekeeperpluralsight.SettingsActivity$NotificationPreferenceFragment"
         android:icon="@drawable/ic_notifications_black_24dp"
         android:title="@string/pref_header_notifications"/>
 
     <header
-        android:fragment="com.jwhh.jim.notekeeper.SettingsActivity$DataSyncPreferenceFragment"
+        android:fragment="com.neo.notekeeperpluralsight.SettingsActivity$DataSyncPreferenceFragment"
         android:icon="@drawable/ic_sync_black_24dp"
         android:title="@string/pref_header_data_sync"/>
 
