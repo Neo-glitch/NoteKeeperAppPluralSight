@@ -27,14 +27,12 @@ import java.util.List;
 
 /**
  * FullyCustom view class for showing dots tabs in noteActivity that reps the num of modules for a course completed(colored)
- * todo comeback to fully understand this class
  */
 public class ModuleStatusView extends View {
     public static final int EDIT_MODE_MODULE_COUNT = 7;
     public static final int INVALID_INDEX = -1;
     public static final int SHAPE_CIRCLE = 0;
     public static final float DEFAULT_OUTLINE_WIDTH_DP = 2F;
-
 
     // my var
     private boolean[] mModuleStatus;    // boolean array for modules and colored is completed
@@ -95,7 +93,6 @@ public class ModuleStatusView extends View {
         float displayDensity = dm.density;                                                  // gets the scaling factor for every dev independent pixel
         float defaultOutlineWidthPixels = displayDensity * DEFAULT_OUTLINE_WIDTH_DP;       // value here is independentPixels passed as constant * device pixel scaling factor = physical pixels
 
-
         // Load attributes. TypedArray for getting actual value set. values derived should be assigned to var before .recycle()
         final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.ModuleStatusView, defStyle, 0);
@@ -108,7 +105,7 @@ public class ModuleStatusView extends View {
 
         a.recycle();
 
-        mShapeSize = 144f;      // shape size of th rect housing the circle
+        mShapeSize = 144f;      // shape size of the rect housing the circle
         mSpacing = 30f;         // spacing btw each individual shape
         mRadius = (mShapeSize - mOutlineWidth) / 2;         // logic make sures circle and outline stays in specified rect
 
@@ -125,7 +122,7 @@ public class ModuleStatusView extends View {
         mPaintFill.setColor(mFillColor);
     }
 
-    //// methods override to implement the accessibility features.. start////
+    //// methods override to implement the accessibility features and forward to acc helper class.. start////
     @Override
     protected void onFocusChanged(boolean gainFocus, int direction, @Nullable Rect previouslyFocusedRect) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
@@ -135,6 +132,7 @@ public class ModuleStatusView extends View {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        // fun indicates whether an key event was handled
         // ret true if handled by accessibilityHelper class else ret false and call superclass method
         return mAccessibilityHelper.dispatchKeyEvent(event) || super.dispatchKeyEvent(event);
 
@@ -182,7 +180,7 @@ public class ModuleStatusView extends View {
         int desiredWidth = 0;
         int desiredHeight = 0;
 
-        int specWidth = MeasureSpec.getSize(widthMeasureSpec);              // gets size of width available in layout
+        int specWidth = MeasureSpec.getSize(widthMeasureSpec);                   // gets size of width available to customView in layout
         int availableWidth = specWidth - getPaddingLeft() - getPaddingRight();   // width to work with in layout after removing padding dpx
 
         int horizontalModulesThatCanFit = availableWidth / (int) (mShapeSize + mSpacing);   // logic to get number of circles that can fit the available width
@@ -205,12 +203,14 @@ public class ModuleStatusView extends View {
 
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {      // called when View size changes for a reason
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        // fun called when View size changes for a reason or size is determined(where we calc pos of singular pos)
+        // receives width and height that view must use to render content
         setUpModuleRectangles(w);
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {      // where actual drawing takes place
+    protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         // pos each of the circle to draw in right place(each rect in the moduleRect array)
@@ -233,8 +233,6 @@ public class ModuleStatusView extends View {
 
     /**
      * method called if user specifies shape to be square in the designer
-     *
-     * @param moduleIndex
      */
     private void drawSquare(Canvas canvas, int moduleIndex) {
         Rect moduleRectangle = mModuleRectangles[moduleIndex];
@@ -263,6 +261,21 @@ public class ModuleStatusView extends View {
         return super.onTouchEvent(event);
     }
 
+
+    /**
+     * gets the module item or rect(housing circle) at the cord passed(x, y)
+     */
+    private int findItemAtPoint(float x, float y) {
+        int moduleIndex = INVALID_INDEX;
+        for (int i = 0; i < mModuleRectangles.length; i++) {
+            if (mModuleRectangles[i].contains((int) x, (int) y)) {   // ret true if x & y cords in rect[] item
+                moduleIndex = i;
+                break;
+            }
+        }
+        return moduleIndex;
+    }
+
     /**
      * changes the value of a selected item at the index passed
      */
@@ -272,26 +285,16 @@ public class ModuleStatusView extends View {
         }
         mModuleStatus[moduleIndex] = !mModuleStatus[moduleIndex];     // if prev value was true now false
         invalidate();                                                 // calls onDraw() again since data is changed
-        mAccessibilityHelper.invalidateVirtualView(moduleIndex);      // notifies accessibility sys that state of VirtualView with id has changed
+
+        mAccessibilityHelper.invalidateVirtualView(moduleIndex);      // notifies accessibility sys that state of VirtualView with id has changed and it's updated
+        // sends notification about event(click) to accessibility sys
         mAccessibilityHelper.sendEventForVirtualView(moduleIndex, AccessibilityEvent.TYPE_VIEW_CLICKED);
 
     }
 
-    /**
-     * gets the module item or rect(housing circle) at the cord passed(x, y)
-     */
-    private int findItemAtPoint(float x, float y) {
-        int moduleIndex = INVALID_INDEX;
-        for (int i = 0; i < mModuleRectangles.length; i++) {
-            if (mModuleRectangles[i].contains((int) x, (int) y)) {   // ret true if x & y cords passed are within the specified rect[] item
-                moduleIndex = i;
-                break;
-            }
-        }
-        return moduleIndex;
-    }
 
-    ////////  Accessibility helper class for enabling accessibility support for the customView class virtualViews(circle) /////////////
+
+    ////////  Accessibility helper class for enabling accessibility support for the customView class virtualViews(circle) as nodes /////////////
     private class ModuleStatusAccessibilityHelper extends ExploreByTouchHelper {
 
         /**
@@ -316,14 +319,16 @@ public class ModuleStatusView extends View {
                 return;
             }
             for (int moduleIndex = 0; moduleIndex < mModuleRectangles.length; moduleIndex++) {
-                virtualViewIds.add(moduleIndex);       // adds the indexes for each of the virtualViews
+                virtualViewIds.add(moduleIndex);       // adds the indexes as ids for each of the virtualViews
             }
         }
 
         @Override
-        protected void onPopulateNodeForVirtualView(int virtualViewId, @NonNull AccessibilityNodeInfoCompat node) {     // gives info abt virtualView id passed and called for every VirtualView
-            node.setFocusable(true);                                     // makes it possible for virtualViews to be accessible with dpad
-            node.setBoundsInParent(mModuleRectangles[virtualViewId]);    // sets the bounds of the virtualView Rect in focus, needed for highlighting of virtualView
+        protected void onPopulateNodeForVirtualView(int virtualViewId, @NonNull AccessibilityNodeInfoCompat node) {
+            // fun gives info(i.e describe) abt virtualView id passed and called for every VirtualView
+
+            node.setFocusable(true);                                            // makes it possible for virtualViews to be accessible with dpad
+            node.setBoundsInParent(mModuleRectangles[virtualViewId]);           // sets the bounds of the virtualView Rect in focus, needed for highlighting of virtualView
             node.setContentDescription("Module " + (virtualViewId + 1));       // in real life, we could have queried db to get module name and used it
 
             node.setCheckable(true);
