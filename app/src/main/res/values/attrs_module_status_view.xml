@@ -1,5 +1,5 @@
 <resources>
-    // user defined stylable resource for custom view config and name tag must match CustomView class name
+    <!-- user defined stylable resource for custom view config and name tag must match CustomView class name-->
     <declare-styleable name="ModuleStatusView">
         <attr name="outlineColor" format="color"/>
         <attr name="shape" format="enum">
